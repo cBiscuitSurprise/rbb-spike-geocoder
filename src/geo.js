@@ -1,5 +1,4 @@
 const NodeGeocoder = require('node-geocoder');
-const { backOff } = require("exponential-backoff");
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap',
@@ -8,10 +7,15 @@ const geocoder = NodeGeocoder({
 
 async function geocode(address) {
   try {
-    return await backOff(() => geocoder.geocode(address), {
-      numOfAttempts: 3,
-      // retry: () => console.warn(`Retrying ${address} ...`),
-    });
+    const geo = await geocoder.geocode(address);
+    if (geo.length > 0) {
+      if (geo.length > 1) {
+        console.warn(`WARN: Multiple addresses returned for ${row.name}`);
+      }
+      return geo[0];
+    } else {
+      return {};
+    }
   } catch (error) {
     console.error(`Failed to fetch geocode for address ${address} with error: ${error.message}`);
     return Promise.resolve({});
